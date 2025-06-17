@@ -21,8 +21,8 @@ fglm.intspols <- function(d, tbounds, formula, n, npf, dx, knotsx, pars, db, kno
   
   for (h in (npf+1):(npf+no.pols)) {
     mm.pol <- attr(terms(formula), "term.labels")[h]
-    with(d, P_a <- attr(eval(parse(text=mm.pol)), "x"))
-    with(d, P_b <- attr(eval(parse(text=mm.pol)), "deg"))
+    P_a <- attr(eval(parse(text=mm.pol), envir = d), "x")
+    P_b <- attr(eval(parse(text=mm.pol), envir = d), "deg")
     for (p in 1:npf) {
       if (npf == 1) {
         modframe.intspols[h] <- ifelse(P_a == names(modframe.intspols)[p], P_b, 0)
