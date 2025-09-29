@@ -45,6 +45,55 @@ mybs <- function(x, degree=3, interior.knots=NULL, intercept=FALSE, Boundary.kno
 }
 
 
+compute_BI <- function(db, knotsb, pars, tu = 1, ngrid = 200) {
+
+  tgrid <- seq(0, tu, length.out = ngrid)
+  dt    <- tu / (ngrid - 1)
+  w     <- rep(dt, ngrid); w[c(1, ngrid)] <- 0.5 * dt
+  
+  build_basis <- function(t, d, knots, par) {
+    if (par == "power") {
+      out <- sapply(0:d, function(k) t^k)
+      if (is.vector(out)) out <- matrix(out, ncol = 1) 
+      out
+    } else if (par == "bspline") {
+      out <- mybs(t, interior.knots = knots, degree = d, intercept = FALSE, Boundary.knots = c(0, tu)
+      )
+      return(as.matrix(out))
+    }
+  }
+  
+  B_list <- lapply(seq_along(db), function(j) build_basis(tgrid, db[j], knotsb[[j]], pars[j]))
+  lens   <- (db + 1L)                      
+  p      <- length(db)                     
+  
+  nrows  <- 1L + sum(lens)
+  ncols  <- 1L + p                         
+  
+  starts <- if (p == 0) integer(0) else 1L + 1L + c(0L, cumsum(lens[-length(lens)]))
+  
+  BI <- matrix(0, nrow = nrows, ncol = nrows)
+  for (i in seq_len(ngrid)) {
+    B_t <- matrix(0, nrow = nrows, ncol = ncols)
+    
+    B_t[1, 1] <- 1
+    
+    if (p > 0) {
+      for (j in seq_len(p)) {
+        v <- as.numeric(B_list[[j]][i, ])
+        r0 <- starts[j]
+        B_t[r0:(r0 + length(v) - 1L), 1L + j] <- v
+      }
+    }
+    
+    BI <- BI + w[i] * (B_t %*% t(B_t))
+  }
+  
+  BI
+}
+
+
+
 
 # Vpower <- function(db, tu){
 #   nb <- db + 1

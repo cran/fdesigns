@@ -1,5 +1,5 @@
-flm.ce.me <- function(d, t, n, npf, dx, knotsx, pars, db, knotsb, v, nb,
-                  tol, dlbound, dubound, nx, flinear, progress, inter, ptm){
+flm.ce.me <- function(d, t, n, npf, dx, knotsx, pars, db, knotsb, v, BI,
+                  nb, tol, dlbound, dubound, nx, flinear, progress, inter, ptm){
   
   tu <- max(t)
   eps <- tol 
@@ -21,7 +21,7 @@ flm.ce.me <- function(d, t, n, npf, dx, knotsx, pars, db, knotsb, v, nb,
   } else {
     z <- djmat
   }
-  curr.eval <- flinear(z=z, v=v) 
+  curr.eval <- flinear(z=z, v=v, b=BI) 
   it <- 1
   if (progress == TRUE) {
     cat("Starting design", c("( Current Value =", curr.eval,")"), "\n")
@@ -40,7 +40,7 @@ flm.ce.me <- function(d, t, n, npf, dx, knotsx, pars, db, knotsb, v, nb,
             } else {
               q <- mlist(f,jmat)
             }            
-            result <- flinear(z=q, v=v)
+            result <- flinear(z=q, v=v, b=BI)
             result
           }
           d[[p]][i,j] <- optim(par=d[[p]][i,j], fn=fnobj, lower=dlbound, 
@@ -54,7 +54,7 @@ flm.ce.me <- function(d, t, n, npf, dx, knotsx, pars, db, knotsb, v, nb,
     } else {
       z <- mlist(d,jmat)
     }    
-    final.opt <- flinear(z=z, v=v)
+    final.opt <- flinear(z=z, v=v, b=BI)
     diff <- abs(curr.eval - final.opt)
     curr.eval <- final.opt
     

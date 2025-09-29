@@ -32,7 +32,7 @@ Michaelides, D. (2023). Design of experiments for models involving profile facto
 example1 <- pflm(formula = ~ x1, nsd = 5, mc.cores = 1, npf = 1,
   tbounds = c(0, 1), nruns = 4, startd = NULL,  dx = c(0), 
   knotsx = list(c(0.5)), pars = c("power"), db = c(1), 
-  knotsb = list(c()), criterion = "A", lambda = 0, 
+  knotsb = list(c()), criterion = "SE", lambda = 0, 
   dlbound = -1, dubound = 1, tol = 0.0001, progress = FALSE)
 
 print(example1) ##  prints the output of example1.
@@ -41,7 +41,7 @@ print(example1) ##  prints the output of example1.
 ##
 ## The number of runs is: 4
 ##
-## The objective criterion is: A-optimality
+## The loss function is: SE
 ##
 ## The objective value is: 8.75
 ##

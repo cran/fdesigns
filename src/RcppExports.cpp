@@ -178,6 +178,7 @@ END_RCPP
 }
 
 RcppExport SEXP linearcppaopt(SEXP, SEXP);
+RcppExport SEXP linearcppaoptweighted(SEXP, SEXP, SEXP);
 RcppExport SEXP linearcppdopt(SEXP, SEXP);
 RcppExport SEXP logisticcppaopt(SEXP, SEXP, SEXP, SEXP);
 RcppExport SEXP logisticcppdopt(SEXP, SEXP, SEXP, SEXP);
@@ -195,11 +196,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"_fdesigns_Vbsplinecpp", (DL_FUNC) &_fdesigns_Vbsplinecpp, 3},
     {"_fdesigns_bsalljcbcpp", (DL_FUNC) &_fdesigns_bsalljcbcpp, 8},
     {"_fdesigns_bsalljcbpowercpp", (DL_FUNC) &_fdesigns_bsalljcbpowercpp, 8},
-    {"linearcppaopt",   (DL_FUNC) &linearcppaopt,   2},
-    {"linearcppdopt",   (DL_FUNC) &linearcppdopt,   2},
-    {"logisticcppaopt", (DL_FUNC) &logisticcppaopt, 4},
-    {"logisticcppdopt", (DL_FUNC) &logisticcppdopt, 4},
-    {"poissoncppdopt",  (DL_FUNC) &poissoncppdopt,  4},
+    {"linearcppaopt",         (DL_FUNC) &linearcppaopt,         2},
+    {"linearcppaoptweighted", (DL_FUNC) &linearcppaoptweighted, 3},
+    {"linearcppdopt",         (DL_FUNC) &linearcppdopt,         2},
+    {"logisticcppaopt",       (DL_FUNC) &logisticcppaopt,       4},
+    {"logisticcppdopt",       (DL_FUNC) &logisticcppdopt,       4},
+    {"poissoncppdopt",        (DL_FUNC) &poissoncppdopt,        4},
     {NULL, NULL, 0}
 };
 

@@ -5,26 +5,30 @@
 \title{Plot of \code{flm} Objects}
 
 \usage{
-\method{plot}{flm}(x, \dots)
+\method{plot}{flm}(x, pf = NULL, \dots)
 }
 
 \arguments{
 \item{x}{An object of class \code{"flm"}.}
+\item{pf}{An integer specifying which profile factor to plot. Must be between \code{1} and \code{x$npf}. If \code{NULL} (default), the function will prompt the user interactively.}
 \item{...}{Additional arguments to be passed to other methods.}
 }
 
-\value{
-The function returns the question:
-"Which profile factor to plot?".
-The answer needs to be an integer to specify the profile factor for which 
-to plot the optimal functions in every run. The value needs to be between 
-1 and the argument npf from the function \link[fdesigns]{pflm}. 
-
-After that, the function returns n.runs (see \link[fdesigns]{pflm}) plots of the optimal functions 
-of the profile factor indicated. The x-axis represents the time, the y-axis represents the
-values of the function of the profile factor, and the title indicated the number of run of 
-each plot. 
+\details{
+The function plots the design functions corresponding to the selected profile factor. If \code{pf = NULL}, 
+the user is asked interactively which profile factor to plot.
+The value needs to be between 1 and the argument npf from the function \link[fdesigns]{pflm}. 
 }
+
+\value{
+Plots are produced on the active graphics device. No object is returned.
+
+Specifically, \code{n.runs} plots are drawn, showing the optimal functions 
+of the selected profile factor. The x-axis represents time, the y-axis 
+represents the values of the profile factor function, and the plot title 
+indicates the run number corresponding to each curve.
+}
+
 
 \description{
 Plot of \code{"flm"} objects. For the choice of a profile factor, the optimal functions are plotted.

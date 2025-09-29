@@ -1,5 +1,5 @@
 pflm <- function(formula, nsd = 1, mc.cores = 1, npf, tbounds, nruns, startd = NULL, dx, knotsx, 
-                 pars, db, knotsb = NULL, criterion = c("A","D"), lambda = 0,
+                 pars, db, knotsb = NULL, criterion = c("SE","WSE","SI"), lambda = 0,
                  dlbound = -1, dubound = 1, tol = 0.0001, progress = FALSE){
   
   if (mc.cores < 1) stop("The number of cores must be at least one")
@@ -13,7 +13,7 @@ pflm <- function(formula, nsd = 1, mc.cores = 1, npf, tbounds, nruns, startd = N
   if (npf != length(dx)) stop("The length of dx should be equal to the number of profile factors")
   if (npf != length(knotsx)) stop("The length of knotsx should be equal to the number of profile factors")
   if (!(all(pars %in% c("power","bspline")))) stop("Parameters should be power or bspline")
-  if (!(criterion %in% c("A","D"))) stop("Criterion should be A or D")
+  if (!(criterion %in% c("SE","WSE","SI"))) stop("Criterion should be SE or WSE or SI")
   if (lambda < 0) stop("Lambda cannot be negative")
   if (tol <= 0) stop("Tolerance should be a positive value")
   if (dubound <= dlbound) stop("The upper bound of the design should be greater than the lower bound")
@@ -48,18 +48,26 @@ pflm <- function(formula, nsd = 1, mc.cores = 1, npf, tbounds, nruns, startd = N
   
   inter <- attr(terms(formula), "intercept")
   dimnb <- inter + sum(nb)
-  if ((nruns < dimnb) & (identical(criterion, "A"))) stop("For invertible information matrix, the number of runs must be greater or equal than the number of basis functions for the functional parameters")
+  if ((nruns < dimnb) & (identical(criterion, "SE"))) stop("For invertible information matrix, the number of runs must be greater or equal than the number of basis functions for the functional parameters")
+  if ((nruns < dimnb) & (identical(criterion, "WSE"))) stop("For invertible information matrix, the number of runs must be greater or equal than the number of basis functions for the functional parameters")
   
-  if (identical(criterion, "A")) {
-    flinear <- linearcpp.aopt
-  } else {
-    flinear <- linearcpp.dopt
+  
+  flinear <- function(z, v, b=NULL) {
+    if (criterion == "SE") {
+      linearcpp.aopt(z=z, v=v)
+    } else if (criterion == "SI") {
+      linearcpp.dopt(z=z, v=v)
+    } else if (criterion == "WSE") {
+      linearcpp.aopt.weighted(z=z, v=v, b=b)
+    } 
   }
+  
   
   nx <- rep(0, npf)
   for (r in 1:npf) {
     nx[r] <- length(knotsx[[r]]) + dx[[r]] + 1
-    if ((nx[r] < nb[r]) & (identical(criterion, "A"))) stop("For invertible information matrix, the number of basis functions for a function of a profile factor must be greater or equal to the number of basis functions for a functional parameter")
+    if ((nx[r] < nb[r]) & (identical(criterion, "SE"))) stop("For invertible information matrix, the number of basis functions for a function of a profile factor must be greater or equal to the number of basis functions for a functional parameter")
+    if ((nx[r] < nb[r]) & (identical(criterion, "WSE"))) stop("For invertible information matrix, the number of basis functions for a function of a profile factor must be greater or equal to the number of basis functions for a functional parameter")
   }
   
   if (lambda == 0) {
@@ -79,6 +87,12 @@ pflm <- function(formula, nsd = 1, mc.cores = 1, npf, tbounds, nruns, startd = N
     } else {
       v <- v[,-1]
     }
+  }
+  
+  if (identical(criterion, "WSE")) {
+    BI <- compute_BI(db = db, knotsb = knotsb, pars = pars, tu = tbounds[2], ngrid = 200)
+  } else {
+    BI <- NULL
   }
   
   if (!is.null(startd)) {
@@ -108,7 +122,7 @@ pflm <- function(formula, nsd = 1, mc.cores = 1, npf, tbounds, nruns, startd = N
     result <- mclapply(X=d, FUN=flm.ce.me, mc.cores=mc.cores, t=tbounds, n=nruns, npf=npf, 
                        db=db, knotsb=knotsb, tol=tol, dx=dx, knotsx=knotsx, pars=pars,
                        dlbound=dlbound, dubound=dubound, progress=progress, nb=nb, nx=nx,
-                       flinear=flinear, v=v, inter=inter, ptm=ptm)
+                       flinear=flinear, v=v, BI=BI, inter=inter, ptm=ptm)
   } else {
     #no.ints <- no.terms - nrow(attr(terms(formula), "factors"))
     nrfactors <- nrow(attr(terms(formula), "factors"))
@@ -118,13 +132,13 @@ pflm <- function(formula, nsd = 1, mc.cores = 1, npf, tbounds, nruns, startd = N
       result <- mclapply(X=d, FUN=flm.ce.ints, mc.cores=mc.cores, formula=formula, t=tbounds, 
                          n=nruns, npf=npf, dx=dx, knotsx=knotsx, pars=pars, flinear=flinear,
                          no.terms=no.terms, no.ints=no.ints, nb=nb, nx=nx, v=v,
-                         db=db, knotsb=knotsb, tol=tol, inter=inter,
+                         BI=BI, db=db, knotsb=knotsb, tol=tol, inter=inter,
                          dlbound=dlbound, dubound=dubound, progress=progress, ptm=ptm)
     } else {
       result <- mclapply(X=d, FUN=flm.ce.intspols, mc.cores=mc.cores, formula=formula, t=tbounds, 
                          n=nruns, npf=npf, dx=dx, knotsx=knotsx, pars=pars, flinear=flinear,
                          no.terms=no.terms, no.pols=no.pols, no.ints=no.ints, nb=nb, nx=nx,
-                         db=db, knotsb=knotsb, v=v, tol=tol, inter=inter,
+                         db=db, knotsb=knotsb, v=v, BI=BI, tol=tol, inter=inter,
                          dlbound=dlbound, dubound=dubound, progress=progress, ptm=ptm)
     }
   }
@@ -149,30 +163,5 @@ pflm <- function(formula, nsd = 1, mc.cores = 1, npf, tbounds, nruns, startd = N
 }
 
 
-# resall.mc <- pflm(formula=~x1+x2+x1:x2+P(x2,2), t=c(0,1), nsd=3, n=20, npf=2, 
-#             dx=c(2,3), knotsx=list(c(0.33,0.66), c(0.25,0.50,0.75)), 
-#               pars=c("bspline","bspline","bspline","bspline"), startd=NULL,
-#                 db=c(0,1,2,2), knotsb=list(c(0.5), c(0.5),c(0.25,0.75), c(0.25,0.75)), 
-#                   criterion="D", tol=0.00001, dlbound=-1, dubound=1, lambda=0, progress=TRUE)
-# 
-# 
-# res <- pflm(formula=~x1, t=c(0,1), nsd=2, n=4, npf=1, 
-#          dx=c(0), knotsx=list(c(0.5)), 
-#          pars=c("power"), startd=NULL,
-#          db=c(1), knotsb=list(c()), 
-#          criterion="A", tol=0.00001, dlbound=-1, dubound=1, lambda=0, progress=TRUE)
-
-# compd.func <- function(allres){
-#   C <- length(allres)
-#   objvals <- rep(0,C)
-#   for (c in 1:C) {
-#     objvals[c] <- allres[[c]]$objective.value
-#   }
-#   objmin <- which.min(objvals)
-#   allres[[objmin]]
-# }
-# 
-# compd.func(resall)
-# compd.func(resall.mc)
 
 

@@ -1,5 +1,5 @@
-flm.ce.ints <- function(d, formula, npf, t, n, dx, knotsx, pars, db, knotsb, nx,
-                  tol, dlbound, dubound, progress, nb, no.terms, no.ints, flinear, v, inter, ptm){
+flm.ce.ints <- function(d, formula, npf, t, n, dx, knotsx, pars, db, knotsb, nx, tol,
+                  dlbound, dubound, progress, nb, no.terms, no.ints, flinear, v, BI, inter, ptm){
   
   tu <- max(t)
   eps <- tol 
@@ -26,7 +26,8 @@ flm.ce.ints <- function(d, formula, npf, t, n, dx, knotsx, pars, db, knotsb, nx,
     dx.ints <- modframe.ints[,q]
     allknotsxb <- knotsx[dx.ints==1]
     nx.ints <- nx[dx.ints==1]
-    if ((prod(nx.ints) < nb[q]) & (identical(flinear, linearcpp.aopt))) stop("For A-optimality, the product of basis functions for the profile factors involved in an interaction must be greater or equal to the number of basis functions for the parameter")
+    if ((prod(nx.ints) < nb[q]) & (identical(flinear, linearcpp.aopt))) stop("For SE loss, the product of basis functions for the profile factors involved in an interaction must be greater or equal to the number of basis functions for the parameter")
+    if ((prod(nx.ints) < nb[q]) & (identical(flinear, linearcpp.aopt.weighted))) stop("For WSE loss, the product of basis functions for the profile factors involved in an interaction must be greater or equal to the number of basis functions for the parameter")
     lkxi <- length(allknotsxb)
     lnxvec <- list()
     for (m in 1:lkxi) {
@@ -47,7 +48,7 @@ flm.ce.ints <- function(d, formula, npf, t, n, dx, knotsx, pars, db, knotsb, nx,
   } else {
     z <- djmat
   }
-  curr.eval <- flinear(z=z, v=v) 
+  curr.eval <- flinear(z=z, v=v, b=BI) 
   it <- 1
   if (progress == TRUE){
     cat("Starting design", c("( Current Value =", curr.eval,")"), "\n")
@@ -72,7 +73,7 @@ flm.ce.ints <- function(d, formula, npf, t, n, dx, knotsx, pars, db, knotsb, nx,
             } else {
               zopt <- mlist(f,jmat)
             }
-            result <- flinear(z=zopt, v=v)
+            result <- flinear(z=zopt, v=v, b=BI)
             result
           }
           d[[p]][i,j] <- optim(par=d[[p]][i,j], fn=fnobj, lower=dlbound, 
@@ -93,7 +94,7 @@ flm.ce.ints <- function(d, formula, npf, t, n, dx, knotsx, pars, db, knotsb, nx,
     } else {
       z <- mlist(d,jmat)
     }    
-    final.opt <- flinear(z=z, v=v)
+    final.opt <- flinear(z=z, v=v, b=BI)
     diff <- abs(curr.eval - final.opt)
     curr.eval <- final.opt
     

@@ -8,7 +8,7 @@ using the coordinate exchange algorithm}
 \usage{
 pflm(formula, nsd = 1, mc.cores = 1, npf, tbounds, 
   nruns, startd = NULL, dx, knotsx, pars, db, 
-  knotsb = NULL, criterion = c("A", "D"), lambda = 0,
+  knotsb = NULL, criterion = c("SE", "WSE", "SI"), lambda = 0,
   dlbound = -1, dubound = 1, tol = 1e-04, progress = FALSE)
 }
 
@@ -33,9 +33,10 @@ the (functional) parameters. For power series basis the degree is: 1 for linear,
 \item{knotsb}{A list of length equal to the total terms in formula, representing the knot vector of each 
 (functional) parameter. For parameters represented by a power series basis, the knot vector should be empty or NULL.}
 \item{lambda}{Smoothing parameter to penalise the complexity of the functions of the profile factors. The default value is 0, i.e., no penalty.}
-\item{criterion}{The choice of objective function. Currently there are two available choices:
-1. A-optimality (criterion = "A");
-2. D-optimality (criterion = "D").}
+\item{criterion}{A character argument specifying the loss function. Currently there are three available choices:
+1. Squared error (criterion = "SE") which reduces to A-optimality for improper prior;
+2. Weighted squared error (criterion = "WSE") which reduces to L-optimality for improper prior;
+3. Shannon information (criterion = "SI") which reduces to D-optimality for improper prior.}
 \item{tol}{The tolerance value in the optimisation algorithm. Default value is 0.0001.}
 \item{dlbound}{The design's lower bound. The default lower bound is -1.}
 \item{dubound}{The design's upper bound. The default upper bound is 1.}
@@ -77,15 +78,16 @@ Damianos Michaelides <\email{dm3g15@soton.ac.uk}>, Antony Overstall, Dave Woods
 
 \examples{
 ## Example 1:
-## This example involves finding an A-optimal design for a functional linear model of 4 runs
-## depending on one profile factor. The settings of the profile factor are represented by a 
-## B-spline basis of degree zero and a single knot at (0.5). The single functional parameter 
-## is represented with a linear power series basis. Five random starts are chosen.
+## This example involves finding an A-optimal design (SE criterion with improper prior) for 
+## a functional linear model of 4 runs depending on one profile factor. The settings of the
+## profile factor are represented by a B-spline basis of degree zero and a single knot 
+## at (0.5). The single functional parameter is represented with a linear power series basis. 
+## Five random starts are chosen.
 
 example1 <- pflm(formula = ~ x1, nsd = 5, mc.cores = 1, npf = 1,
   tbounds = c(0, 1), nruns = 4, startd = NULL,  dx = c(0), 
   knotsx = list(c(0.5)), pars = c("power"), db = c(1), 
-  knotsb = list(c()), criterion = "A", lambda = 0, 
+  knotsb = list(c()), criterion = "SE", lambda = 0, 
   dlbound = -1, dubound = 1, tol = 0.0001, progress = FALSE)
 
 print(example1) ##  prints the output of example1.
@@ -94,7 +96,7 @@ print(example1) ##  prints the output of example1.
 ##
 ## The number of runs is: 4
 ##
-## The objective criterion is: A-optimality
+## The loss function is: SE
 ##
 ## The objective value is: 8.75
 ##
@@ -107,9 +109,10 @@ print(example1) ##  prints the output of example1.
 
 \donttest{
 ## Example 2:
-## This example involves finding a D-optimal design for a functional linear model of n=20 runs
-## depending on two profile factors. In addition to the main effects, the model includes the
-## interaction of the profile factors and the quadratic effect of the second profile factor. 
+## This example involves finding a D-optimal design (SI criterion with improper prior) 
+## for a functional linear model of n=20 runs depending on two profile factors.
+## In addition to the main effects, the model includes the interaction
+## of the profile factors and the quadratic effect of the second profile factor. 
 ## The settings of the profile factors are represented by B-spline basis of quadratic degrees
 ## and knots at (0.33, 0.66) and (0.25, 0.50, 0.75). The functional parameters are represented 
 ## with linear power basis and quadratic B-spline basis with knots at (0.25, 0.50, 0.75). 
@@ -120,7 +123,7 @@ example2 <- pflm(formula = ~ x1 + x2 + x1:x2 + P(x2, 2), nsd = 1, mc.cores = 1,
   knotsx = list(c(0.33, 0.66), c(0.25, 0.50, 0.75)), 
   pars = c("power", "power", "bspline", "bspline"), db = c(1, 1, 2, 2), 
   knotsb = list(c(), c(), c(0.25, 0.50, 0.75), c(0.25, 0.50, 0.75)), 
-  criterion = "D", lambda = 1, tol = 0.0001, dlbound = -1, dubound = 1, 
+  criterion = "SI", lambda = 1, tol = 0.0001, dlbound = -1, dubound = 1, 
   progress = FALSE)
 
 print(example2) ##  prints the output of example2.
@@ -129,7 +132,7 @@ print(example2) ##  prints the output of example2.
 ##
 ## The number of runs is: 20
 ##
-## The objective criterion is: D-optimality
+## The loss function is: SI
 ##
 ## The objective value is: 0.05706758
 ##

@@ -53,6 +53,55 @@ RcppExport SEXP linearcppaopt(SEXP z, SEXP v) {
 
 
 
+RcppExport SEXP linearcppaoptweighted(SEXP z, SEXP v, SEXP b) {
+  
+  Rcpp::NumericMatrix zr(z);
+  Rcpp::NumericMatrix vr(v);
+  Rcpp::NumericMatrix br(b);
+  
+  int nb = zr.ncol();
+  int n = zr.nrow();
+  
+  arma::mat Z(zr.begin(), n, nb, false);
+  arma::mat V(vr.begin(), nb, nb, false);
+  arma::mat B(br.begin(), nb, nb, false);
+    
+  #define ARMA_DONT_PRINT_ERRORS
+  #include<exception>
+  #include <armadillo>
+  
+  std::ostream nullstream(0);
+  ARMA_CERR_STREAM;
+  
+  arma::mat ZWZ = arma::zeros(nb,nb);
+  arma::mat ZWZv = arma::zeros(nb,nb);
+  arma::mat ZWZi = arma::zeros(nb,nb);
+  
+  double out;
+    
+    ZWZ.zeros();
+    for (int ii=0; ii<nb; ii++) {
+      for (int jj=ii; jj<nb; jj++) {
+        for (int kk=0; kk<n; kk++) {
+          ZWZ(ii,jj) += Z(kk,ii)*Z(kk,jj);}
+        ZWZ(jj,ii) = ZWZ(ii,jj);}}
+
+    ZWZv = ZWZ + V;
+    
+    bool flag = inv_sympd(ZWZi,ZWZv);
+    
+    if(flag==1){
+    out = trace(ZWZi * B);
+	} else {
+    out = 100000;}
+
+  return as<NumericVector>(wrap(out));
+  
+}
+
+
+
+
 
 RcppExport SEXP linearcppdopt(SEXP z, SEXP v) {
   

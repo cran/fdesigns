@@ -2,6 +2,10 @@ linearcpp.aopt <- function(z, v){
 	.Call( "linearcppaopt", z, v, PACKAGE = "fdesigns" )
 }
 
+linearcpp.aopt.weighted <- function(z, v, b){
+  .Call( "linearcppaoptweighted", z, v, b, PACKAGE = "fdesigns" )
+}
+
 linearcpp.dopt <- function(z, v){
   .Call( "linearcppdopt", z, v, PACKAGE = "fdesigns" )
 }
